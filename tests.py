@@ -56,7 +56,6 @@ import requests
 import datetime
 import real_code
 import doctest
-import sys
 
 mock_requests = requests.Session()
 # A Session can stand in for the whole "requests" module because the global
@@ -69,8 +68,9 @@ mock_requests = requests.Session()
 # there are lots of ways to "mock" something! Mock is merely a convenience.
 
 class TestGoogleForToday(unittest.TestCase):
+    """Test the real_code."""
 
-    def test_format_date_for_search(self):
+    def test_format_date(self):
         """This test does not need any mocks or patches. The
         format_date_for_search() function is well-designed."""
 
@@ -81,20 +81,21 @@ class TestGoogleForToday(unittest.TestCase):
             result = real_code.format_date_for_search(date)
             self.assertEqual(result, required)
 
-        assert_format( (2014, 1, 1), 'Wednesday January 1st 2014')
-        assert_format( (2014, 1, 2), 'Thursday January 2nd 2014')
-        assert_format( (2014, 1, 3), 'Friday January 3rd 2014')
-        assert_format( (2014, 1, 4), 'Saturday January 4th 2014')
+        assert_format((2014, 1, 1), 'Wednesday January 1st 2014')
+        assert_format((2014, 1, 2), 'Thursday January 2nd 2014')
+        assert_format((2014, 1, 3), 'Friday January 3rd 2014')
+        assert_format((2014, 1, 4), 'Saturday January 4th 2014')
 
-    
-    def test_format_date_for_search_with_mock(self):
+
+    def test_format_date_with_mock(self):
         """When possible, always prefer to explicitly pass mock objects
         into the subject library."""
 
         # step #1: prepare the mock before the test
         mock_date = mock.Mock(spec=datetime.date)
         mock_date.strftime.return_value = 'Friday January 17th 2014'
-        # properties require a little more typing but are equally straight-forward.
+        # to set properties, you need to grab the class of the mock.
+        # (every mock object as it's own unique class.)
         mock_day_property = mock.PropertyMock(return_value=17)
         type(mock_date).day = mock_day_property
 
@@ -145,17 +146,18 @@ class TestGoogleForToday(unittest.TestCase):
         # mock out today(), same as before
         mock_datetime.date.today.return_value = datetime.date(2014, 1, 17)
 
-        with Betamax(mock_requests, cassette_library_dir='betamax_cassettes') as betamax:
-            # the first time I ran this unit test, I set record to 'once' so that it
-            # would create the cassette file and record the request/response.
-            # betamax.use_cassette('google', record='once')
+        with Betamax(mock_requests,
+                     cassette_library_dir='betamax_cassettes') as betamax:
+            # The first time I ran this unit test, I set record to 'once' so
+            # that it would create the cassette file and record the
+            # request/response.  betamax.use_cassette('google', record='once')
 
-            # after that, I set it to 'none' so that it would throw an error
-            # if the request does not match a pre-recorded request. This
-            # prevents it from ever even trying to  access the real network.
+            # After that, I set it to 'none' so that it would throw an error if
+            # the request does not match a pre-recorded request. This prevents
+            # it from ever even trying to  access the real network.
             betamax.use_cassette('google', record='none')
 
-            urls = list( real_code.google_for_today() )
+            urls = list(real_code.google_for_today())
 
             # generic tests that will always pass against live data
             self.assertEquals(len(urls), 10)
@@ -166,7 +168,7 @@ class TestGoogleForToday(unittest.TestCase):
             # we can also write tests using specific knowledge of the test
             # fixtures, or in this case the recorded request.
             self.assertEquals(
-                urls[0], 
+                urls[0],
                 "http://newday.blogs.cnn.com/2014/01/17/5-things-to-know-for-your-new-day-friday-january-17/")
 
 
